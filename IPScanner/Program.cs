@@ -10,31 +10,26 @@ namespace IPScanner {
     internal class Program {
         // private static int port = 8728;
         public static void Main(string[] args) {
+            for (int i = 0; i < args.Length; i++) {
+                switch (args[i].ToLower()) {
+                    case "-config":
+                    case "--config":
+                        // TODO: if the user inserts wrong config file then generate a prefab
+                        // TODO: input yaml config and read values from that
+                        /* ! config format:
+                         * 0:
+                         *  ip: 192.168.255.0
+                         *  mask: 24
+                         *  port: 8728
+                         *  msTimeout: 100
+                         *  outputFile: "default"
+                         *  printConnectionFailures: false
+                         */
+                        break;
+                }
+            }
             List<Subnet> subnets = new List<Subnet>();
-            // try {
-            //     // Get IP from user:
-            //     Console.WriteLine("Valid IP format: 192.168.0.1");
-            //     string ip = Console.ReadLine();
-            //     
-            //     // Get mask from user:
-            //     int mask;
-            //     do {
-            //         Console.WriteLine("Valid mask format: 24");
-            //         mask = Int32.Parse(Console.ReadLine());
-            //     } while (mask < 0 || mask > 32);
-            //     
-            //     // Get port:
-            //     Console.WriteLine("Valid port format: 8728");
-            //     int port = Int32.Parse(Console.ReadLine());
-            //     subnets.Add(new Subnet(ip, mask, port));
-            //     
-            // } catch (Exception exception) {
-            //     Console.ForegroundColor = ConsoleColor.Red;
-            //     Console.WriteLine("Internal error occured: {0}", exception);
-            //     Console.ForegroundColor = ConsoleColor.White;
-            //     Main(args);
-            // }
-            subnets.Add(new Subnet("192.168.255.0", 24, 8728, 100));
+            subnets.Add(new Subnet("192.168.255.0", 24, 8728, 100, "default", true));
             subnets[0].Run();
         }
     }

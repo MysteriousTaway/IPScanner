@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
-using tik4net;
 
 namespace IPScanner {
     public class Subnet {
@@ -24,12 +24,16 @@ namespace IPScanner {
         public long broadcastIPLong;
 
         public int msTimeout;
+        public string outputFile;
+        public bool printConnectionFailures;
 
-        public Subnet(string ip, int mask, int port, int msTimeout) {
+        public Subnet(string ip, int mask, int port, int msTimeout, string outputFile, bool printConnectionFailures) {
             this.ip = ip;
             this.mask = mask;
             this.port = port;
             this.msTimeout = msTimeout;
+            this.outputFile = outputFile;
+            this.printConnectionFailures = printConnectionFailures;
             
             ipLong = ConvertIpToLong(ip);
             networkIP = GetNetworkIPLong(ip, mask);
@@ -39,6 +43,16 @@ namespace IPScanner {
         }
 
         public void Run() {
+            Console.BackgroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.Black;
+                    
+            Console.WriteLine("Scan of [" + networkIP + "] started!");
+            
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
             for (long i = networkIPLong; i <= broadcastIPLong; i++) {
                 try {
                     String currentIP = ConvertLongToIp(i);
@@ -51,31 +65,40 @@ namespace IPScanner {
                         
                         Console.WriteLine(currentIP);
                         socket.Disconnect(false);
-                        
-                        AppendLineToFile(networkIP.Replace(Char.Parse("."), Char.Parse("_")), currentIP);
-                        
+
+                        if (outputFile.ToLower().Equals("default")) {
+                            AppendLineToFile(networkIP.Replace(Char.Parse("."), Char.Parse("_")) + ".txt", currentIP);
+                        } else {
+                            AppendLineToFile(outputFile, currentIP);
+                        }
+
                         Console.BackgroundColor = ConsoleColor.Black;
                         Console.ForegroundColor = ConsoleColor.White;
                     } else {
-                        Console.BackgroundColor = ConsoleColor.Red;
-                        Console.ForegroundColor = ConsoleColor.Black;
+                        if (printConnectionFailures) {
+                            Console.BackgroundColor = ConsoleColor.Red;
+                            Console.ForegroundColor = ConsoleColor.Black;
                         
-                        Console.WriteLine(currentIP);
-                        
-                        Console.BackgroundColor = ConsoleColor.Black;
-                        Console.ForegroundColor = ConsoleColor.White;
+                            Console.WriteLine(currentIP);
+
+                            Console.BackgroundColor = ConsoleColor.Black;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
                     }
                 } catch (Exception e) {}
             }
+            Console.BackgroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.Black;
+            
+            Console.WriteLine("Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Stop();  
+            
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         private void AppendLineToFile( String fileName, String line) {
-            if (File.Exists(fileName)) {
-                File.AppendAllText(fileName, line);
-            } else {
-                File.Create(fileName);
-                File.AppendAllText(fileName, line);
-            }
+            File.AppendAllText(fileName, line + "\n");
         }
 
         #region IP conversion
