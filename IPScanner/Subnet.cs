@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
+using tik4net;
 
 namespace IPScanner {
     public class Subnet {
@@ -40,20 +42,42 @@ namespace IPScanner {
             for (long i = networkIPLong; i <= broadcastIPLong; i++) {
                 try {
                     String currentIP = ConvertLongToIp(i);
-                    // Console.WriteLine(currentIP);
                     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    // socket.ReceiveTimeout = 500;
-                    // socket.Connect(currentIP, port);
                     IAsyncResult result = socket.BeginConnect( currentIP, port, null, null );
                     bool success = result.AsyncWaitHandle.WaitOne( msTimeout, true );
                     if (success) {
-                        Console.WriteLine("Can connect to: " + currentIP);
+                        Console.BackgroundColor = ConsoleColor.Green;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        
+                        Console.WriteLine(currentIP);
                         socket.Disconnect(false);
+                        
+                        AppendLineToFile(networkIP.Replace(Char.Parse("."), Char.Parse("_")), currentIP);
+                        
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.White;
+                    } else {
+                        Console.BackgroundColor = ConsoleColor.Red;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        
+                        Console.WriteLine(currentIP);
+                        
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.White;
                     }
                 } catch (Exception e) {}
             }
         }
-        
+
+        private void AppendLineToFile( String fileName, String line) {
+            if (File.Exists(fileName)) {
+                File.AppendAllText(fileName, line);
+            } else {
+                File.Create(fileName);
+                File.AppendAllText(fileName, line);
+            }
+        }
+
         #region IP conversion
 
         string GetNetworkIPLong(String ip, int mask) {
