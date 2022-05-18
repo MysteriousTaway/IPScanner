@@ -13,7 +13,7 @@ namespace IPScanner {
 
         public void Run() {
             while (!(threadNum + 1).Equals(Program.threadsFinished)) {
-                Thread.Sleep(30000);
+                Thread.Sleep(autoFlushInterval);
                 for (int i = 0; i < threadNum; i++) {
                     Program.PrintInfoToConsole("Attempting to force flush writer buffer for thread [" + i + "]");
                     Program.ForceFlushWriteForThreadBuffer(i);
