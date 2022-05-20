@@ -20,6 +20,8 @@ namespace IPScanner {
 
         public static string ipRange;
         public static string network;
+
+        public static int flushInterval;
         
         public static void Main(string[] args) {
             
@@ -32,23 +34,25 @@ namespace IPScanner {
             printToConsole = false;
             ipRange = "";
             network = "";
+            flushInterval = 30000;
 
             if (args.Length.Equals(0)) {
                 Console.WriteLine(
                     "Example: -ip 192.168.255.0 -mask 24 -port 8728 -msTimeout 100 -outputFile default -printConnectionFailures false -printToConsole true -thread 0"+
                     "Available args: (arguments themselves are not case sensitive)" +
-                    "-thread                   ()          [Separates where args for threads end and must be on the end even if you want to use only one thread make sure to write index of the thread after that]" +
+                    "-thread                   (int)          [Separates where args for threads end and must be on the end even if you want to use only one thread make sure to write index of the thread after that]" +
                     "-ip                       (string)    " +
-                    "-network                  (string)    " +
-                    "-ipRange                  (string)    Example: -ipRange 127.0.0.0-127.0.10.0" +
                     "-mask                     (int)       " +
                     "-port                     (int)       " +
+                    "-network                  (string)    Example: -network 127.0.0.1/24" +
+                    "-ipRange                  (string)    Example: -ipRange 127.0.0.1-127.0.10.1" +
                     "-msTimeout                (int)       [For how long the program is trying to contact a specific IP address]" +
                     "-outputFile               (string)    [Location of output file]" +
                     "-printConnectionFailures  (bool)      [Prints red messages when unable to connect to IP]" +
-                    "-printToConsole           (bool)      [Prints green messages when able to connect to IP]"
+                    "-printToConsole           (bool)      [Prints green messages when able to connect to IP]" +
+                    "-flushInterval            (int)       [How often in milliseconds will AutoFlush save output to files.]"
                 );
-                Console.ReadLine();
+                // Console.ReadLine();
                 return;
             }
 
@@ -58,47 +62,41 @@ namespace IPScanner {
             // basically a current thread will be used: (0 first index)
             threadNum = 0;
             for (int i = 0; i < args.Length; i = i + 2 ) {
+                args[i] = args[i].Replace("-", "");
                 switch (args[i].ToLower()) {
-                    case "-ip":
-                    case "--ip":
+                    case "ip":
                         ip = args[i+1];
                         break;
-                    case "-mask":
-                    case "--mask":
+                    case "mask":
                         mask = Int32.Parse(args[i+1]);
                         break;
-                    case "-port":
-                    case "--port":
+                    case "port":
                         port = Int32.Parse(args[i+1]);
                         break;
-                    case "-mstimeout":
-                    case "--mstimeout":
+                    case "mstimeout":
                         msTimeout = Int32.Parse(args[i+1]);
                         break;
-                    case "-outputfile":
-                    case "--outputfile":
+                    case "outputfile":
                         outputFile = args[i+1];
                         break;
-                    case "-printconnectionfailures":
-                    case "--printconnectionfailures":
+                    case "printconnectionfailures":
                         printConnectionFailures = Boolean.Parse(args[i+1]);
                         break;
-                    case "-printtoconsole":
-                    case "--printtoconsole":
+                    case "printtoconsole":
                         printToConsole = Boolean.Parse(args[i+1]);
                         break;
-                    case"-iprange":
-                    case"--iprange":
+                    case"iprange":
                         ipRange = args[i + 1];
                         break;
-                    case"-network":
-                    case"--network":
+                    case"network":
                         network = args[i + 1];
                         break;
-                    case "-thread":
-                    case "--thread":
+                    case "thread":
                         arguments.Add(new Argument(ip, mask, port, msTimeout, outputFile, printConnectionFailures, printToConsole, threadNum, network, ipRange));
                         threadNum++;
+                        break;
+                    case "flushinterval":
+                        flushInterval = Int32.Parse(args[i + 1]);
                         break;
                     default:
                         Console.BackgroundColor = ConsoleColor.Red;
@@ -159,7 +157,7 @@ namespace IPScanner {
             }
 
             threadsFinished = 0;
-            Autoflush autoFlush = new Autoflush(threadNum, 30000);
+            Autoflush autoFlush = new Autoflush(threadNum, flushInterval);
             Thread autoFlushThread = new Thread(() => autoFlush.Run());
             autoFlushThread.Start();
             // Console.ReadLine();
