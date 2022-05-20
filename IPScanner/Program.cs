@@ -6,15 +6,32 @@ namespace IPScanner {
     internal class Program {
         public static int threadNum;
         public static int threadsFinished;
+        
+        // Required:
+        public static string ip;
+        public static int mask;
+        public static int port;
+             
+        // Optional:
+        public static int msTimeout;
+        public static string outputFile;
+        public static bool printConnectionFailures;
+        public static bool printToConsole;
+
+        public static string ipRange;
+        public static string network;
+        
         public static void Main(string[] args) {
-            string ip = "";
-            int mask = -1;
-            int port = -1;
             
-            int msTimeout = 1000;
-            string outputFile = "default";
-            bool printConnectionFailures = false;
-            bool printToConsole = true;
+            ip = "";
+            mask = -1;
+            port = -1;
+            msTimeout = 1000;
+            outputFile = "default";
+            printConnectionFailures = false;
+            printToConsole = false;
+            ipRange = "";
+            network = "";
 
             if (args.Length.Equals(0)) {
                 Console.WriteLine(
@@ -22,6 +39,8 @@ namespace IPScanner {
                     "Available args: (arguments themselves are not case sensitive)" +
                     "-thread                   ()          [Separates where args for threads end and must be on the end even if you want to use only one thread make sure to write index of the thread after that]" +
                     "-ip                       (string)    " +
+                    "-network                  (string)    " +
+                    "-ipRange                  (string)    Example: -ipRange 127.0.0.0-127.0.10.0" +
                     "-mask                     (int)       " +
                     "-port                     (int)       " +
                     "-msTimeout                (int)       [For how long the program is trying to contact a specific IP address]" +
@@ -68,10 +87,17 @@ namespace IPScanner {
                     case "--printtoconsole":
                         printToConsole = Boolean.Parse(args[i+1]);
                         break;
+                    case"-iprange":
+                    case"--iprange":
+                        ipRange = args[i + 1];
+                        break;
+                    case"-network":
+                    case"--network":
+                        network = args[i + 1];
+                        break;
                     case "-thread":
                     case "--thread":
-                        arguments.Add(new Argument(ip, mask, port, msTimeout, outputFile, printConnectionFailures, printToConsole, threadNum));
-                        Console.WriteLine("{0}] ip: {1} mask: {2} port: {3} msTimeout: {4} outputFile: {5} printConnectionFailures: {6} printToConsole: {7}", arguments[threadNum].threadNum , arguments[threadNum].ip, arguments[threadNum].mask, arguments[threadNum].port, arguments[threadNum].msTimeout, arguments[threadNum].outputFile, arguments[threadNum].printConnectionFailures, arguments[threadNum].printToConsole);
+                        arguments.Add(new Argument(ip, mask, port, msTimeout, outputFile, printConnectionFailures, printToConsole, threadNum, network, ipRange));
                         threadNum++;
                         break;
                     default:
@@ -85,33 +111,34 @@ namespace IPScanner {
             }
 
             foreach (var varArgument in arguments) {
-                // Check validity of args for threads:
-                if (!varArgument.ip.Equals("") || !varArgument.mask.Equals(-1) || !varArgument.port.Equals(-1) || !varArgument.outputFile.Equals("")) {
+                String inputDataType = "";
+
+                if (!varArgument.ip.Equals("") && !varArgument.mask.Equals(-1) && !varArgument.port.Equals(-1)) {
+                    inputDataType = "Standard";
+                } else if (!varArgument.ipRange.Equals("") && !varArgument.port.Equals(-1)) {
+                    inputDataType = "IP Range";
+                } else if (!varArgument.network.Equals("")) {
+                    inputDataType = "Network";
+                } else {
+                    inputDataType = "Undefined";
+                }
+
+                if (!inputDataType.Equals("Undefined")) {
+                    if (printToConsole) {
+                        Console.WriteLine("THREAD: [{0}] ARGS: [ip: {1} mask: {2} port: {3} msTimeout: {4} outputFile: {5} printConnectionFailures: {6} printToConsole: {7} network: {8} ipRange: {9}]", varArgument.threadNum, varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout, varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole, varArgument.network, varArgument.ipRange);
+                    }
                     Subnet subnet = new Subnet(varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout,
                         varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole,
-                        varArgument.threadNum);
+                        varArgument.threadNum, varArgument.network, varArgument.ipRange);
                     textAppend.Add(new TextAppend("", varArgument.outputFile, varArgument.threadNum));
-                    // Console.WriteLine("{0}] ip: {1} mask: {2} port: {3} msTimeout: {4} outputFile: {5} printConnectionFailures: {6} printToConsole: {7}", varArgument.threadNum , varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout, varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole);
                     Thread thread = new Thread(() =>
                         subnet.Run()
                     );
                     threadPool.Add(thread);
-                    
                 } else {
                     Console.BackgroundColor = ConsoleColor.Red;
                     Console.ForegroundColor = ConsoleColor.Black;
-                    if (varArgument.ip.Equals("")) {
-                        Console.WriteLine("[thread: {0}] IP has not been set!", varArgument.threadNum);
-                    }
-                    if (varArgument.mask.Equals(-1)) {
-                        Console.WriteLine("[thread: {0}] Mask has not been set!", varArgument.threadNum);
-                    }
-                    if (varArgument.port.Equals(-1)) {
-                        Console.WriteLine("[thread: {0}] Port has not been set!", varArgument.threadNum);
-                    }
-                    if (varArgument.outputFile.Equals("")) {
-                        Console.WriteLine("[thread: {0}] Output file location has not been set!", varArgument.threadNum);
-                    }
+                    Console.WriteLine("Network parameters for thread [{0}] might not be correctly defined! This network will not be scanned! Parameters: -ip = {1} -mask = {2} -port = {3} -msTimeout = {4} -outputFile = {5} -printConnectionFailures = {6} -printToConsole = {7} -network = {8} -ipRange = {9}", varArgument.threadNum, varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout, varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole, varArgument.network, varArgument.ipRange);
                     Console.BackgroundColor = ConsoleColor.Black;
                     Console.ForegroundColor = ConsoleColor.White;
                 }
@@ -121,11 +148,13 @@ namespace IPScanner {
             // Run all threads:
             foreach (var t in threadPool) {
                 t.Start();
-                Console.BackgroundColor = ConsoleColor.Yellow;
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.WriteLine("Thread {0} started!", k);
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
+                if (printToConsole) {
+                    Console.BackgroundColor = ConsoleColor.Yellow;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.WriteLine("Thread {0} started!", k);
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
                 k++;
             }
 
@@ -133,7 +162,7 @@ namespace IPScanner {
             Autoflush autoFlush = new Autoflush(threadNum, 30000);
             Thread autoFlushThread = new Thread(() => autoFlush.Run());
             autoFlushThread.Start();
-            Console.ReadLine();
+            // Console.ReadLine();
         }
         
         private static List<TextAppend> textAppend = new List<TextAppend>();
@@ -162,24 +191,32 @@ namespace IPScanner {
         }
 
         public static void PrintToConsole(string text) {
-            Console.WriteLine("[" + DateTime.Now + "]" + text);
+            if (printToConsole) {
+                Console.WriteLine("[" + DateTime.Now + "]" + text);
+            }
         }
         public static void PrintInfoToConsole(string text) {
-            Console.BackgroundColor = ConsoleColor.Yellow;
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine("[" + DateTime.Now + "]" + text);
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.White;
+            if (printToConsole) {
+                Console.BackgroundColor = ConsoleColor.Yellow;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.WriteLine("[" + DateTime.Now + "]" + text);
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
         public static void PrintScanFinishToConsole(string text) {
-            Console.BackgroundColor = ConsoleColor.Green;
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine("[" + DateTime.Now + "]" + text);
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.White;
+            if (printToConsole) {
+                Console.BackgroundColor = ConsoleColor.Green;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.WriteLine("[" + DateTime.Now + "]" + text);
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
         public static void PrintWarningToConsole(string text) {
-            Console.Error.WriteLine("! " + "[" + DateTime.Now + "]" + text);
+            if (printToConsole) {
+                Console.Error.WriteLine("! " + "[" + DateTime.Now + "]" + text);
+            }
         }
     }
 }

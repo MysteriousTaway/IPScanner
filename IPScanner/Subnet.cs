@@ -27,8 +27,11 @@ namespace IPScanner {
         public bool printConnectionFailures;
         public bool printToConsole;
         public int threadNum;
+        
+        public string network;
+        public string ipRange;
 
-        public Subnet(string ip, int mask, int port, int msTimeout, string outputFile, bool printConnectionFailures, bool printToConsole, int threadNum) {
+        public Subnet(string ip, int mask, int port, int msTimeout, string outputFile, bool printConnectionFailures, bool printToConsole, int threadNum, string network,string ipRange) {
             this.ip = ip;
             this.mask = mask;
             this.port = port;
@@ -37,12 +40,41 @@ namespace IPScanner {
             this.printConnectionFailures = printConnectionFailures;
             this.printToConsole = printToConsole;
             this.threadNum = threadNum;
+            this.network = network;
+            this.ipRange = ipRange;
             
-            ipLong = ConvertIpToLong(ip);
-            networkIP = GetNetworkIPLong(ip, mask);
-            broadcastIP = GetBroadcastIPLong(ip, mask);
-            networkIPLong = ConvertIpToLong(networkIP);
-            broadcastIPLong = ConvertIpToLong(broadcastIP);
+            if (this.ipRange.Equals("") && this.network.Equals("")) {
+                // * WITHOUT ipRange OR network arg:
+                ipLong = ConvertIpToLong(this.ip);
+                networkIP = GetNetworkIPLong(this.ip, this.mask);
+                broadcastIP = GetBroadcastIPLong(this.ip, this.mask);
+                // min and max:
+                networkIPLong = ConvertIpToLong(networkIP);
+                broadcastIPLong = ConvertIpToLong(broadcastIP);
+            }
+            
+            if (!this.ipRange.Equals("")) {
+                // * WITH ipRange arg:
+                string[] net = this.ipRange.Split(Char.Parse("-"));
+                // min and max:
+                networkIPLong = ConvertIpToLong(net[0]);
+                broadcastIPLong = ConvertIpToLong(net[1]);
+            }
+
+            if (!this.network.Equals("")) {
+                // * WITH network arg:
+                string[] net = this.network.Split(Char.Parse("/"));
+                Program.PrintToConsole("net: " + net[0] + ", " + net[1]);
+                this.ip = net[0];
+                this.mask = Int32.Parse(net[1]);
+                
+                ipLong = ConvertIpToLong(this.ip);
+                networkIP = GetNetworkIPLong(this.ip, this.mask);
+                broadcastIP = GetBroadcastIPLong(this.ip, this.mask);
+                // min and max:
+                networkIPLong = ConvertIpToLong(networkIP);
+                broadcastIPLong = ConvertIpToLong(broadcastIP);
+            }
         }
 
         public void Run() {
@@ -71,19 +103,14 @@ namespace IPScanner {
                         }
                     } else {
                         if (printConnectionFailures) {
-                            if (printToConsole) {
-                                Program.PrintWarningToConsole(currentIP);
-                            }
+                            Program.PrintWarningToConsole(currentIP);
                         }
                     }
-                }
-                catch (Exception exception) {
+                } catch (Exception exception) {
                     Program.PrintWarningToConsole("Exception on thread [" + threadNum + "]\n" + exception.ToString());
                 }
             }
-            if (printToConsole) {
-                Program.PrintScanFinishToConsole("[" + (Program.threadsFinished + 1) + "/" + Program.threadNum + "][" + threadNum + "] Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
-            }
+            Program.PrintScanFinishToConsole("[" + (Program.threadsFinished + 1) + "/" + Program.threadNum + "][" + threadNum + "] Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
             stopwatch.Stop();
             Program.ForceFlushWriteForThreadBuffer(threadNum);
             Program.threadsFinished++;

@@ -8,8 +8,10 @@
         public bool printConnectionFailures;
         public bool printToConsole;
         public int threadNum;
+        public string network;
+        public string ipRange;
 
-        public Argument(string ip, int mask, int port, int msTimeout, string outputFile, bool printConnectionFailures, bool printToConsole, int threadNum) {
+        public Argument(string ip, int mask, int port, int msTimeout, string outputFile, bool printConnectionFailures, bool printToConsole, int threadNum, string network, string ipRange) {
             this.ip = ip;
             this.mask = mask;
             this.port = port;
@@ -18,6 +20,8 @@
             this.printConnectionFailures = printConnectionFailures;
             this.printToConsole = printToConsole;
             this.threadNum = threadNum;
+            this.network = network;
+            this.ipRange = ipRange;
         }
     }
 }
