@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net.Sockets;
 
 namespace IPScanner {
@@ -83,7 +82,7 @@ namespace IPScanner {
                 }
             }
             if (printToConsole) {
-                Program.PrintScanFinishToConsole("[" + Program.threadsFinished + "/" + Program.threadNum + "][" + threadNum + "] Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
+                Program.PrintScanFinishToConsole("[" + (Program.threadsFinished + 1) + "/" + Program.threadNum + "][" + threadNum + "] Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
             }
             stopwatch.Stop();
             Program.ForceFlushWriteForThreadBuffer(threadNum);

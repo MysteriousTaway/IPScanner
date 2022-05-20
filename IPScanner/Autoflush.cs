@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 
 namespace IPScanner {
     public class Autoflush {
@@ -12,7 +11,7 @@ namespace IPScanner {
         }
 
         public void Run() {
-            while (!(threadNum + 1).Equals(Program.threadsFinished)) {
+            while (!threadNum.Equals(Program.threadsFinished)) {
                 Thread.Sleep(autoFlushInterval);
                 for (int i = 0; i < threadNum; i++) {
                     Program.PrintInfoToConsole("Attempting to force flush writer buffer for thread [" + i + "]");

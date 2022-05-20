@@ -2,10 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
-/* TODO: Autoflush timer for all threads.
- *
- * 
- */
 namespace IPScanner {
     internal class Program {
         public static int threadNum;
@@ -17,9 +13,9 @@ namespace IPScanner {
             
             int msTimeout = 1000;
             string outputFile = "default";
-            bool printConnectionFailures = true;
+            bool printConnectionFailures = false;
             bool printToConsole = true;
-            
+
             if (args.Length.Equals(0)) {
                 Console.WriteLine(
                     "Example: -ip 192.168.255.0 -mask 24 -port 8728 -msTimeout 100 -outputFile default -printConnectionFailures false -printToConsole true -thread 0"+
@@ -33,6 +29,7 @@ namespace IPScanner {
                     "-printConnectionFailures  (bool)      [Prints red messages when unable to connect to IP]" +
                     "-printToConsole           (bool)      [Prints green messages when able to connect to IP]"
                 );
+                Console.ReadLine();
                 return;
             }
 
@@ -86,15 +83,14 @@ namespace IPScanner {
                         break;
                 }
             }
-            // bug in autoflush.cs was fixed by this line of code:
-            threadNum--;
-            
+
             foreach (var varArgument in arguments) {
                 // Check validity of args for threads:
                 if (!varArgument.ip.Equals("") || !varArgument.mask.Equals(-1) || !varArgument.port.Equals(-1) || !varArgument.outputFile.Equals("")) {
                     Subnet subnet = new Subnet(varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout,
                         varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole,
                         varArgument.threadNum);
+                    textAppend.Add(new TextAppend("", varArgument.outputFile, varArgument.threadNum));
                     // Console.WriteLine("{0}] ip: {1} mask: {2} port: {3} msTimeout: {4} outputFile: {5} printConnectionFailures: {6} printToConsole: {7}", varArgument.threadNum , varArgument.ip, varArgument.mask, varArgument.port, varArgument.msTimeout, varArgument.outputFile, varArgument.printConnectionFailures, varArgument.printToConsole);
                     Thread thread = new Thread(() =>
                         subnet.Run()
@@ -137,6 +133,7 @@ namespace IPScanner {
             Autoflush autoFlush = new Autoflush(threadNum, 30000);
             Thread autoFlushThread = new Thread(() => autoFlush.Run());
             autoFlushThread.Start();
+            Console.ReadLine();
         }
         
         private static List<TextAppend> textAppend = new List<TextAppend>();
