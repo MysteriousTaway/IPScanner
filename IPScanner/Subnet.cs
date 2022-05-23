@@ -107,7 +107,7 @@ namespace IPScanner {
                         }
                     }
                 } catch (Exception exception) {
-                    Program.PrintWarningToConsole("Exception on thread [" + threadNum + "]\n" + exception.ToString());
+                    Program.PrintExceptionToConsole("Exception on thread [" + threadNum + "]\n" + exception.ToString());
                 }
             }
             Program.PrintScanFinishToConsole("[" + (Program.threadsFinished + 1) + "/" + Program.threadNum + "][" + threadNum + "] Scan of [" + networkIP + "] finished! \nProcess took: " + stopwatch.ElapsedMilliseconds + "ms");
